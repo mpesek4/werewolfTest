@@ -11,14 +11,15 @@ export default function GameRoom(props) {
     document.getElementById("video-grid")
   );
 
-  const [players, setPlayers] = useState([
-    { userId: "Aleks M" },
-    { userId: "Michael P" },
-  ]);
+ 
 
-  const [videoList, setVideoList] = useState([]);
+  const [videoRef1, setVideoRef1] = useState(React.createRef());
+  const [videoRef2, setVideoRef2] = useState(React.createRef());
+  const [videoRef3, setVideoRef3] = useState(React.createRef());
+
+  const [refCounter, setRefCounter] = useState(1);
   
-  const [stream, setStream] = useState(new MediaStream);
+  
 
   const [ourId, setOurId] = useState("-1");
 
@@ -157,12 +158,29 @@ export default function GameRoom(props) {
     await video.addEventListener("loadedmetadata", () => {
       video.play();
     });
-   
-    // videoGrid.append(video);
-    
-    setVideoList([...videoList,video])
 
-    console.log("what is video source in addVideoStream", video.srcObject)
+    if(refCounter === 1){
+      console.log("inside ref 1 adding stream as ref: ", stream)
+      setVideoRef1({videoRef1: { ...current.srcObject, stream}} )
+      setRefCounter(2)
+      console.log("what is videoRef1", videoRef1)
+    }
+    else if(refCounter === 2){
+      console.log("inside ref 2 adding stream as ref: ", stream)
+      setVideoRef2({videoRef2: { ...current.srcObject, stream}} )
+      setRefCounter(3)
+      console.log("what is videoRef2", videoRef2)
+    }
+    else if(refCounter === 3){
+      console.log("inside ref 1 adding stream as ref: ", stream)
+      setVideoRef3({videoRef3: { ...current.srcObject, stream}}  )
+      setRefCounter(4)
+    }
+   
+    
+
+  
+   
     
   
     
@@ -183,8 +201,9 @@ export default function GameRoom(props) {
   
 
   return (<div>
-            <VideoGrid videoList={videoList}></VideoGrid>
-
+            <video ref={videoRef1}/>
+            <video ref={videoRef2}/>
+            <video ref={videoRef3}/>
           </div>)
 
  
