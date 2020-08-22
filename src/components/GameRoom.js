@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Peer from "peerjs";
 import { db } from "../firebase/firebase";
-import VideoGrid from  "./VideoGrid"
-import { render } from "@testing-library/react";
 
 
 export default class GameRoom extends React.Component {
@@ -17,40 +15,41 @@ export default class GameRoom extends React.Component {
       myPeer: new Peer(undefined, {
         host: "/",
         port: "3001",
-      })
+      }),
+      ourId: "-1"
     }
+    this.connectToNewUser = this.connectToNewUser.bind(this)
+    this.addVideoStream = this.addVideoStream.bind(this)
+    
   }
 
-  compenentDidMount(){
-
-    console.log("MY PEER IS", myPeer);
-    myVideo.muted = true;
+  componentDidMount(){
+    console.log("in CDM")
+    this.state.myVideo.muted = true;
     
     navigator.mediaDevices.getUserMedia({
       video: true,
       audio: true
     }).then(stream => {
-      addVideoStream(myVideo, stream)
+      this.addVideoStream(this.state.myVideo, stream)
     
       console.log("what is my stream", stream)
     
-      myPeer.on('call', call => {
+      this.state.myPeer.on('call', call => {
         call.answer(stream)
         const video = document.createElement('video')
 
-
         call.on('stream', userVideoStream => {
           console.log("how many times am I happening, stream: ", userVideoStream)
-          addVideoStream(video, userVideoStream)
+          this.addVideoStream(video, userVideoStream)
         })
       })
 
       db.collection('users').onSnapshot(async (snapshot) => {
         let data = snapshot.docs
         data.map(doc => {
-            console.log("DOC IS ", doc.data())
-            if(ourId != doc.data().userId){
-              connectToNewUser(doc.data().userId,stream)
+            if(this.state.ourId != doc.data().userId){
+              this.connectToNewUser(doc.data().userId,stream)
 
             }
             
@@ -60,13 +59,12 @@ export default class GameRoom extends React.Component {
      
     })
 
-
     // console.log("stream is", stream)
 
-
-    myPeer.on("open", (id) => {
+    this.state.myPeer.on("open", (id) => {
         console.log("my peer open", id);
-        setOurId(id)
+        this.setState({ourId: id})
+      
         console.log("setting our id to ", id)
     
         db.collection("users").add({ userId: id });
@@ -108,26 +106,25 @@ export default class GameRoom extends React.Component {
   
 
   async connectToNewUser(userId, stream) {
+    
 
-
-    if(userId === ourId) return
-    const call = myPeer.call(userId, stream);
-
-    console.log("ARE WE SEEING CALLS", call)
-
+    const call = this.state.myPeer.call(userId, stream);
     if(!call){
         console.log("call doesn't exist")
         return
     } 
     const video = document.createElement("video");
 
-    console.log("before stream event user: ", userId)
+    
     call.on("stream", (userVideoStream) => {
+      console.log("our id and user Id,")
+      console.log(this.state.ourId, userId)
+
+
       
-      if(userId != ourId ){
+      if(userId != this.state.ourId ){
         console.log("connecting to user: ", userId)
-        addVideoStream(video, userVideoStream);
-        setPeers({ ...peers, userId: call });
+        this.addVideoStream(video, userVideoStream);
       }
       
     });
@@ -140,41 +137,57 @@ export default class GameRoom extends React.Component {
 
   async addVideoStream(video, stream) {
     // console.log("inside VideoStream", video);
-    video.srcObject = stream;
-    await video.addEventListener("loadedmetadata", () => {
-      video.play();
-    });
-
-    if(refCounter === 1){
+    // video.srcObject = stream;
+    // await video.addEventListener("loadedmetadata", () => {
+    //   video.play();
+    // });
+    //setState({videoRef1: {}})
+    if(this.state.refCounter === 1){
       console.log("inside ref 1 adding stream as ref: ", stream)
-      setVideoRef1({videoRef1: { ...current.srcObject, stream}} )
-      setRefCounter(2)
-      console.log("what is videoRef1", videoRef1)
+      console.log("what is videoref1", this.state.videoRef1)
+      this.setState(videoRef1 => ({
+        ...videoRef1,
+           current: { // someProperty
+          ...videoRef1.current,
+              srcObject: stream // someOtherProperty
+        }
+      }))
+      //this.setState({videoRef1:{...this.state.videoRef1, current: {...this.state.videoRef1.current, srcObject: stream}}})
+      this.setState({refCounter: this.state.refCounter+1})
+      console.log("what is videoRef1", this.state.videoRef1)
     }
-    else if(refCounter === 2){
+    else if(this.state.refCounter === 2){
       console.log("inside ref 2 adding stream as ref: ", stream)
-      setVideoRef2({videoRef2: { ...current.srcObject, stream}} )
-      setRefCounter(3)
-      console.log("what is videoRef2", videoRef2)
+      this.setState(videoRef2 => ({
+        ...videoRef2,
+           current: { // someProperty
+          ...videoRef2.current,
+              srcObject: stream // someOtherProperty
+        }
+      }))
+      this.setState({refCounter: this.state.refCounter+1})
+      console.log("what is videoRef2", this.state.videoRef2)
     }
-    else if(refCounter === 3){
+    else if(this.state.refCounter === 3){
       console.log("inside ref 1 adding stream as ref: ", stream)
-      setVideoRef3({videoRef3: { ...current.srcObject, stream}}  )
-      setRefCounter(4)
+      this.setState(videoRef3 => ({
+        ...videoRef3,
+           current: { // someProperty
+          ...videoRef3.current,
+              srcObject: stream // someOtherProperty
+        }
+      }))
+      this.setState({refCounter: this.state.refCounter+1})
     }
-     
   }
 
-  
   render(){
     return (<div>
-      <video ref={videoRef1}/>
-      <video ref={videoRef2}/>
-      <video ref={videoRef3}/>
+      <video ref={this.state.videoRef1} id="r1" autoPlay={true} />
+      <video ref={this.state.videoRef2} autoPlay={true} />
+      <video ref={this.state.videoRef3} autoPlay={true} />
+      <p>hello</p>
     </div>)
 
   }
-  
-
- 
 }
