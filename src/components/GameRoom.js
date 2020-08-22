@@ -15,6 +15,7 @@ export default class GameRoom extends React.Component {
       }),
       ourId: "-1"
     }
+    this.peers = new Set()
     this.videoRef1 = React.createRef()
     this.videoRef2 = React.createRef()
     this.videoRef3 = React.createRef()
@@ -33,7 +34,7 @@ export default class GameRoom extends React.Component {
     }).then(stream => {
       this.addVideoStream(this.state.myVideo, stream)
     
-      console.log("what is my stream", stream)
+      
     
       this.state.myPeer.on('call', call => {
         call.answer(stream)
@@ -41,7 +42,16 @@ export default class GameRoom extends React.Component {
 
         call.on('stream', userVideoStream => {
           console.log("how many times am I happening, stream: ", userVideoStream)
-          this.addVideoStream(video, userVideoStream)
+
+          console.log("CALL OBJECT IS", call)
+
+          
+          if(!this.peers.has(call.peer)){
+            console.log("checking this peer", call.peer)
+            this.addVideoStream(video, userVideoStream)
+          }
+          this.peers.add(call.peer)
+          console.log("this.peers", this.peers)
         })
       })
 
@@ -117,14 +127,16 @@ export default class GameRoom extends React.Component {
 
     
     call.on("stream", (userVideoStream) => {
-      console.log("our id and user Id,")
-      console.log(this.state.ourId, userId)
-
 
       
       if(userId != this.state.ourId ){
         console.log("connecting to user: ", userId)
-        this.addVideoStream(video, userVideoStream);
+
+        // only add stream if they are not in hash table
+        if(!this.peers.has(call.peer)){
+          this.addVideoStream(video, userVideoStream);
+        }
+        
       }
       
     });
@@ -145,19 +157,6 @@ export default class GameRoom extends React.Component {
     if(this.state.refCounter === 1){
       console.log("inside ref 1 adding stream as ref: ", stream)
       console.log("what is videoref1", this.videoRef1)
-      // this.setState(videoRef1 => ({
-      //   ...videoRef1,
-      //      current: { // someProperty
-      //     ...videoRef1.current,
-      //         srcObject: "hello" // someOtherProperty
-      //   }
-      // }))
-      // this.setState(videoRef1 => ({
-      //   ...videoRef1,
-      //      current: "hello"
-  
-      // }))
-      // this.setState({videoRef1:{...this.state.videoRef1, current: {...this.state.videoRef1.current, srcObject: stream}}})
       this.videoRef1.current.srcObject = stream
       this.setState({refCounter: this.state.refCounter+1})
       console.log("what is videoRef1", this.state.videoRef1)
@@ -169,11 +168,11 @@ export default class GameRoom extends React.Component {
       console.log("what is videoRef2", this.state.videoRef2)
     }
     else if(this.state.refCounter === 3){
-      console.log("inside ref 1 adding stream as ref: ", stream)
+      console.log("inside ref 3 adding stream as ref: ", stream)
       this.videoRef3.current.srcObject = stream
       this.setState({refCounter: this.state.refCounter+1})
 
-      console.log("what is videoRef3", this.state.videoRef2)
+      console.log("what is videoRef3", this.state.videoRef3)
     }
   }
 
