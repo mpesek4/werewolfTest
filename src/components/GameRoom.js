@@ -8,9 +8,6 @@ export default class GameRoom extends React.Component {
     super(props)
     this.state = {
       myVideo: document.createElement("video"),
-      videoRef1: React.createRef(),
-      videoRef2: React.createRef(),
-      videoRef3: React.createRef(),
       refCounter: 1,
       myPeer: new Peer(undefined, {
         host: "/",
@@ -18,6 +15,9 @@ export default class GameRoom extends React.Component {
       }),
       ourId: "-1"
     }
+    this.videoRef1 = React.createRef()
+    this.videoRef2 = React.createRef()
+    this.videoRef3 = React.createRef()
     this.connectToNewUser = this.connectToNewUser.bind(this)
     this.addVideoStream = this.addVideoStream.bind(this)
     
@@ -144,48 +144,44 @@ export default class GameRoom extends React.Component {
     //setState({videoRef1: {}})
     if(this.state.refCounter === 1){
       console.log("inside ref 1 adding stream as ref: ", stream)
-      console.log("what is videoref1", this.state.videoRef1)
-      this.setState(videoRef1 => ({
-        ...videoRef1,
-           current: { // someProperty
-          ...videoRef1.current,
-              srcObject: stream // someOtherProperty
-        }
-      }))
-      //this.setState({videoRef1:{...this.state.videoRef1, current: {...this.state.videoRef1.current, srcObject: stream}}})
+      console.log("what is videoref1", this.videoRef1)
+      // this.setState(videoRef1 => ({
+      //   ...videoRef1,
+      //      current: { // someProperty
+      //     ...videoRef1.current,
+      //         srcObject: "hello" // someOtherProperty
+      //   }
+      // }))
+      // this.setState(videoRef1 => ({
+      //   ...videoRef1,
+      //      current: "hello"
+  
+      // }))
+      // this.setState({videoRef1:{...this.state.videoRef1, current: {...this.state.videoRef1.current, srcObject: stream}}})
+      this.videoRef1.current.srcObject = stream
       this.setState({refCounter: this.state.refCounter+1})
       console.log("what is videoRef1", this.state.videoRef1)
     }
     else if(this.state.refCounter === 2){
       console.log("inside ref 2 adding stream as ref: ", stream)
-      this.setState(videoRef2 => ({
-        ...videoRef2,
-           current: { // someProperty
-          ...videoRef2.current,
-              srcObject: stream // someOtherProperty
-        }
-      }))
+      this.videoRef2.current.srcObject = stream
       this.setState({refCounter: this.state.refCounter+1})
       console.log("what is videoRef2", this.state.videoRef2)
     }
     else if(this.state.refCounter === 3){
       console.log("inside ref 1 adding stream as ref: ", stream)
-      this.setState(videoRef3 => ({
-        ...videoRef3,
-           current: { // someProperty
-          ...videoRef3.current,
-              srcObject: stream // someOtherProperty
-        }
-      }))
+      this.videoRef3.current.srcObject = stream
       this.setState({refCounter: this.state.refCounter+1})
+
+      console.log("what is videoRef3", this.state.videoRef2)
     }
   }
 
   render(){
     return (<div>
-      <video ref={this.state.videoRef1} id="r1" autoPlay={true} />
-      <video ref={this.state.videoRef2} autoPlay={true} />
-      <video ref={this.state.videoRef3} autoPlay={true} />
+      <video ref={this.videoRef1} id="r1" autoPlay={true} />
+      <video ref={this.videoRef2} autoPlay={true} />
+      <video ref={this.videoRef3} autoPlay={true} />
       <p>hello</p>
     </div>)
 
