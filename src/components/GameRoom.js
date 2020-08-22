@@ -2,43 +2,27 @@ import React, { useEffect, useState } from "react";
 import Peer from "peerjs";
 import { db } from "../firebase/firebase";
 import VideoGrid from  "./VideoGrid"
+import { render } from "@testing-library/react";
 
 
-export default function GameRoom(props) {
-  const [myVideo, setVideo] = useState(document.createElement("video"));
+export default class GameRoom extends React.Component {
+  constructor(props){
+    super(props)
+    this.state = {
+      myVideo: document.createElement("video"),
+      videoRef1: React.createRef(),
+      videoRef2: React.createRef(),
+      videoRef3: React.createRef(),
+      refCounter: 1,
+      myPeer: new Peer(undefined, {
+        host: "/",
+        port: "3001",
+      })
+    }
+  }
 
-  const [videoGrid, setVideoGrid] = useState(
-    document.getElementById("video-grid")
-  );
+  compenentDidMount(){
 
- 
-
-  const [videoRef1, setVideoRef1] = useState(React.createRef());
-  const [videoRef2, setVideoRef2] = useState(React.createRef());
-  const [videoRef3, setVideoRef3] = useState(React.createRef());
-
-  const [refCounter, setRefCounter] = useState(1);
-  
-  
-
-  const [ourId, setOurId] = useState("-1");
-
-  const [peers, setPeers] = useState({});
-
-  // const myPeer = new Peer(undefined, {
-  //     host: '/',
-  //     port: '3001'
-  //   })
-
-  const [myPeer, setMyPeers] = useState(
-    new Peer(undefined, {
-      host: "/",
-      port: "3001",
-    })
-  );
-
-
-  useEffect(() => {
     console.log("MY PEER IS", myPeer);
     myVideo.muted = true;
     
@@ -119,9 +103,11 @@ export default function GameRoom(props) {
     //   socket.on('user-disconnected', userId => {
     //     if (peers[userId]) peers[userId].close()
     //   })
-  }, []); // use effect ends here
+  }
 
-  async function connectToNewUser(userId, stream) {
+  
+
+  async connectToNewUser(userId, stream) {
 
 
     if(userId === ourId) return
@@ -152,7 +138,7 @@ export default function GameRoom(props) {
     
   }
 
-  async function addVideoStream(video, stream) {
+  async addVideoStream(video, stream) {
     // console.log("inside VideoStream", video);
     video.srcObject = stream;
     await video.addEventListener("loadedmetadata", () => {
@@ -176,35 +162,19 @@ export default function GameRoom(props) {
       setVideoRef3({videoRef3: { ...current.srcObject, stream}}  )
       setRefCounter(4)
     }
-   
-    
-
-  
-   
-    
-  
-    
+     
   }
-// async function getStream(){
-//     navigator.mediaDevices.getUserMedia({
-//         video: true,
-//         audio: true
-//       }).then(async newStream => {
-//         console.log("setting stream in state1", newStream)
-//         addVideoStream(myVideo, newStream)
-//         // // console.log("new stream is", newStream)
-//         await setStream(newStream)
-//         console.log("setting stream in state", stream)
-//       })
-// }
 
   
+  render(){
+    return (<div>
+      <video ref={videoRef1}/>
+      <video ref={videoRef2}/>
+      <video ref={videoRef3}/>
+    </div>)
 
-  return (<div>
-            <video ref={videoRef1}/>
-            <video ref={videoRef2}/>
-            <video ref={videoRef3}/>
-          </div>)
+  }
+  
 
  
 }
