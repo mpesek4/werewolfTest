@@ -40,6 +40,7 @@ export default class GameRoom extends React.Component {
         });
         db.collection('users').onSnapshot(async (snapshot) => {
           let data = snapshot.docs;
+          handleMajority(game) // listening for changes to user voting
           data.map((doc) => {
             if (this.state.ourId !== doc.data().userId) {
               this.connectToNewUser(doc.data().userId, stream);
@@ -90,7 +91,7 @@ export default class GameRoom extends React.Component {
       this.setState({ refCounter: this.state.refCounter + 1 });
     }
   }
-  handleNightLogic(game, ourId) {
+  handleNightTransition(game, ourId) {
     if (game.villagers.length === 0){
       assignRoles(game)
     }
@@ -102,23 +103,66 @@ export default class GameRoom extends React.Component {
           villager.id !== game.werewolfChoice
         })
         game.dead.push(game.werewolfChoice)
-        game.medicChoice = null
-        game.numVillagers = game.villagers.length-1
-        game.votesWerewolves = null
-        game.checkWerewolf = false
-        game.checkMedic = false
-        game.checkSeer = false
+        
       }
     } //outer IF
     else {
       return
     }
     game.Night = false
+    game.medicChoice = null
+    game.votesWerewolves = null
+    game.checkWerewolf = false
+    game.checkMedic = false
+    game.checkSeer = false
     //updating game state in DB
     db.update(game)
   }
-  handleDayLogic(game, ourId) {
+
+  handleDayTransition(game, ourId) {
+    if (game.majorityReached){
+      if (game.villagers.includes(game.villagersChoice)){
+        games.villagers = game.villagers.filter(villager => {
+          villager.id !== game.villagersChoice
+        })
+      } else {
+        games.werewolves = game.werewolves.filter(werewolf => {
+          werewolf.id !== game.villagersChoice
+        })
+      
+      }
+      game.dead.push(game.villagersChoice)
+    } //outer IF
+    else {
+      return
+    }
+    game.night = true
+    game.villagersChoice = null
+    game.majorityReached = false
+    //updating game state in DB
+    db.update(game)
   }
+
+  handleMajority(game) { //end goal to update villageGers
+
+    const totalPlayers = game.villagers.length + game.werewolves.length
+    let votingObject = {} //key will be a user, value is how many votes for that user
+
+    for(user of this.state.users){ // need to add gameState and users tables to state
+      if(Object.keys(user).includes(user.currentVote)){
+        votingObject[user.currentVote]+=1
+      }
+      else{
+        votingObject[user.currentVote]=1
+      }
+    }
+    for(user of Object.keys(user)){
+      if (votingObject[user] > Math.floor(totalPlayers / 2)){
+        db.collection('gameState').doc(this.props.gameState.docid).villagersChoice.update(user)
+      }
+    } 
+  }
+
   render() {
     return (
       <div>
