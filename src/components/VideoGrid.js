@@ -21,10 +21,10 @@ export default function VideoGrid({videoList}) {
     }
    
     return (
+        
         <div id="video-x">
             <video src={vid.srcObject} autoplay="true"> </video>
-        </div>
-        
+        </div> 
     )
     
     
