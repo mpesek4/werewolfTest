@@ -229,15 +229,15 @@ export default class GameRoom extends React.Component {
         console.log("werewolves are ", werewolves)
         werewolves.push(user)
       }
-      if(i == 3){
+      if(i == 2){
         db.collection('gameState').doc(this.state.gameId).update({seer: user})
         villagers.push(user)
       }
-      if(i == 4){
+      if(i == 3){
         db.collection('gameState').doc(this.state.gameId).update({medic: user})
         villagers.push(user)
       }
-      if(i > 4){
+      if(i > 3){
         villagers.push(user)
       }
 
