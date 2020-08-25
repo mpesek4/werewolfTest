@@ -57,7 +57,6 @@ export default class GameRoom extends React.Component {
         });
         db.collection('users').onSnapshot(async (snapshot) => {
           let data = snapshot.docs;
-          this.handleMajority(game) // listening for changes to user voting
           data.map((doc) => {
             if (this.state.ourId !== doc.data().userId) {
               this.connectToNewUser(doc.data().userId, stream);
@@ -120,13 +119,13 @@ export default class GameRoom extends React.Component {
     this.handleSeer()
     this.handleMedic()
     if (game.checkWerewolf && game.checkSeer && game.checkMedic) {
-      if (game.werewolfChoice === game.medicChoice){
-        game.werewolfChoice = null
+      if (game.werewolvesChoice === game.medicChoice){
+        game.werewolvesChoice = ""
       } else {
-        game.villagers = game.villagers.filter (villager => {
-          return villager.id !== game.werewolfChoice
+        game.villagers = game.villagers.filter(villager => {
+          return villager !== game.werewolvesChoice
         })
-        game.dead.push(game.werewolfChoice)
+        game.dead.push(game.werewolvesChoice)
         
       }
     } //outer IF
@@ -134,41 +133,46 @@ export default class GameRoom extends React.Component {
       return
     }
     game.Night = false
-    game.medicChoice = null
-    game.votesWerewolves = null
+    game.medicChoice = ""
+    game.votesWerewolves = ""
     game.checkWerewolf = false
     game.checkMedic = false
     game.checkSeer = false
+    game.votesWerewolves = []
+    game.villagersChoice = ""
     //updating game state in DB
 
     console.log("DURING NIGHT, ABOUT TO GO TO DAY", game)
-    db.update(game)
+    db.collection('gameState').doc(this.state.gameId).update(game)
   }
 
   handleDayTransition(game, ourId) {
+    this.handleMajority(game)
     if (game.majorityReached){
       if (game.villagers.includes(game.villagersChoice)){
         game.villagers = game.villagers.filter(villager => {
-          return villager.id !== game.villagersChoice
+          return villager !== game.villagersChoice
         })
       } else {
         game.werewolves = game.werewolves.filter(werewolf => {
-          return werewolf.id !== game.villagersChoice
+          return werewolf !== game.villagersChoice
         })
-      
       }
       game.dead.push(game.villagersChoice)
     } //outer IF
     else {
       return
     }
-    game.night = true
-    game.villagersChoice = null
+    game.Night = true
+    game.villagersChoice = ""
+    game.wereWolvesChoice = ""
     game.majorityReached = false
+    game.votesVillagers = []
     //updating game state in DB
 
     console.log("DURING DAY, ABOUT TO GO TO NIGHT", game)
-    db.update(game)
+
+    db.collection('gameState').doc(this.state.gameId).update(game)
   }
   async handleWerewolfVote(game){
     let players = await db.collection('gameState').doc(this.state.gameId).get()
@@ -234,19 +238,22 @@ export default class GameRoom extends React.Component {
     // let players = await db.collection('gameState').doc(this.state.gameId).data().players
 
     let players = await db.collection('gameState').doc(this.state.gameId).get()
-    players= players.data().players
-    for(let player of players){ // need to add gameState and users tables to state
-      if(Object.keys(player).includes(player.currentVote)){
-        votingObject[player.currentVote]+=1
+    let votesVillagers= players.data().votesVillagers
+
+    for(let player of votesVillagers){ // need to add gameState and users tables to state
+      if(Object.keys(votingObject).includes(player)){
+        votingObject[player]+=1
       }
       else{
-        votingObject[player.currentVote]=1
+        votingObject[player]=1
       }
     }
+    console.log("in handle majority", votingObject)
+
     for(let player of Object.keys(votingObject)){
       if (votingObject[player] > Math.floor(totalPlayers / 2)){
         // db.collection('gameState').doc(this.state.gameId).villagersChoice.update(player) // find real way to do this
-        db.collection('gameState').doc(this.state.gameId).update({villagersChoice: player}) 
+        db.collection('gameState').doc(this.state.gameId).update({villagersChoice: player,majorityReached: true}) 
       }
     } 
   }
