@@ -12,7 +12,7 @@ export default class GameRoom extends React.Component {
         port: '3001',
       }),
       ourId: '',
-      gameId: "6g6EUlGaBQbD0m2rjBUx"
+      gameId: "6g6EUlGaBQbD0m2rjBUx",
     };
     this.peers = new Set();
     this.videoRef1 = React.createRef();
@@ -24,6 +24,10 @@ export default class GameRoom extends React.Component {
     this.handleNightTransition = this.handleNightTransition.bind(this);
     this.handleDayTransition = this.handleDayTransition.bind(this);
     this.assignRolesAndStartGame = this.assignRolesAndStartGame.bind(this)
+
+    this.handleWerewolfVote = this.handleWerewolfVote.bind(this)
+    this.handleMedic =  this.handleMedic.bind(this)
+    this.handleSeer = this.handleSeer.bind(this)
   }
   async componentDidMount() {
 
@@ -112,6 +116,9 @@ export default class GameRoom extends React.Component {
     if (game.villagers.length === 1){
       this.assignRolesAndStartGame(game)
     }
+    this.handleWerewolfVote(game) // checks if werewolves have agreed on a vote, and sets in our DB
+    this.handleSeer()
+    this.handleMedic()
     if (game.checkWerewolf && game.checkSeer && game.checkMedic) {
       if (game.werewolfChoice === game.medicChoice){
         game.werewolfChoice = null
@@ -163,6 +170,62 @@ export default class GameRoom extends React.Component {
     console.log("DURING DAY, ABOUT TO GO TO NIGHT", game)
     db.update(game)
   }
+  async handleWerewolfVote(game){
+    let players = await db.collection('gameState').doc(this.state.gameId).get()
+
+    players = players.data().werewolves
+
+    const totalPlayers = game.werewolves.length
+
+    let votesWerewolves = await db.collection('gameState').doc(this.state.gameId).get()
+    votesWerewolves = votesWerewolves.data().votesWerewolves 
+
+    console.log("what are my villagers", votesWerewolves)
+
+    let votingObject = {}
+    
+
+    for(let player of votesWerewolves){ // need to add gameState and users tables to state
+      if(Object.keys(votingObject).includes(player)){
+        votingObject[player]+=1
+      }
+      else{
+        votingObject[player]=1
+      }
+    }
+    console.log("voting object is", votingObject)
+    for(let player of Object.keys(votingObject)){
+      if (votingObject[player] > Math.floor(totalPlayers / 2)){
+        // db.collection('gameState').doc(this.state.gameId).villagersChoice.update(player) // find real way to do this
+        db.collection('gameState').doc(this.state.gameId).update({werewolvesChoice: player,checkWerewolf: true})
+      }
+    } 
+  }
+  async handleSeer(){
+
+    const player = await db.collection('gameState').doc(this.state.gameId).get()
+
+    const seerChoice = player.data().seerChoice
+
+    if(seerChoice === "") return
+    else{
+      console.log("setting seerCheck to true")
+      db.collection('gameState').doc(this.state.gameId).update({checkSeer: true})
+    }
+  }
+  async handleMedic(){
+
+    const player = await db.collection('gameState').doc(this.state.gameId).get()
+
+    const medicChoice = player.data().medicChoice
+
+    if(medicChoice === "") return
+    else{
+      console.log("setting seerCheck to true")
+      db.collection('gameState').doc(this.state.gameId).update({checkMedic: true})
+    }
+  }
+  
 
   async handleMajority(game) { //end goal to update villageGers
 
