@@ -61,17 +61,16 @@ export default class GameRoom extends React.Component {
           });
         });
         //create firebase method to look up individual game
+        console.log("what is our game ID", this.state.gameId)
         db.collection('gameState').doc(this.state.gameId).onSnapshot(async (snapshot) => {
-          let data = snapshot.docs;
-          console.log("what is data for game state on snapshot")
+          let game = snapshot.data();
+          
+          if(!game.gameStarted) return
 
-          if(!data[0].data().gameStarted) return
-
-          let game = snapshot.doc.data();
           if (game.Night) {
-            this.handleNightLogic(game, this.state.ourId)
+            this.handleNightTransition(game, this.state.ourId)
           } else {
-            this.handleDayLogic(game, this.state.ourId)
+            this.handleDayTransition(game, this.state.ourId)
           }
         })
       });
@@ -110,7 +109,7 @@ export default class GameRoom extends React.Component {
     }
   }
   handleNightTransition(game, ourId) {
-    if (game.villagers.length === 0){
+    if (game.villagers.length === 1){
       this.assignRolesAndStartGame(game)
     }
     if (game.checkWerewolf && game.checkSeer && game.checkMedic) {
@@ -172,7 +171,7 @@ export default class GameRoom extends React.Component {
     // let players = await db.collection('gameState').doc(this.state.gameId).data().players
 
     let players = await db.collection('gameState').doc(this.state.gameId).get()
-    let players= players.data().players
+    players= players.data().players
     for(let player of players){ // need to add gameState and users tables to state
       if(Object.keys(player).includes(player.currentVote)){
         votingObject[player.currentVote]+=1
@@ -183,40 +182,68 @@ export default class GameRoom extends React.Component {
     }
     for(let player of Object.keys(votingObject)){
       if (votingObject[player] > Math.floor(totalPlayers / 2)){
-        db.collection('gameState').doc(this.state.gameId).villagersChoice.update(player) // find real way to do this
+        // db.collection('gameState').doc(this.state.gameId).villagersChoice.update(player) // find real way to do this
+        db.collection('gameState').doc(this.state.gameId).update({villagersChoice: player}) 
       }
     } 
   }
   handleClick(e){
-    db.collection('gameState').doc(this.state.gameId).villagersChoice.update({gameStarted: true}) 
+    db.collection('gameState').doc(this.state.gameId).update({gameStarted: true}) 
   }
   async assignRolesAndStartGame(game){
     console.log("In assignRoles")
-    const users = await db.collection('users').where("currentGame", "==", this.state.gameId)
-
+    let users = await db.collection('users').where("currentGame", "==", this.state.gameId).get()
+    users = users.docs
+    
     //randomize later
+    console.log("what is users in assign roles", users)
 
-    let werewolves = await db.collection('gameState').doc(this.state.gameId).data().werewolves
-    let villagers = await db.collection('gameState').doc(this.state.gameId).data().villagers
 
-    for(let i = 0;i < users.length;i++){
+    let werewolves = []
+    
+    let villagers = []
+    
+
+    // for(let i = 0;i < users.length;i++){
+    //   if(i<2){
+    //     console.log("werewolves are ", werewolves)
+    //     werewolves.push(users[i])
+    //   }
+    //   if(i == 3){
+    //     db.collection('gameState').doc(this.state.gameId).update({seer: users[i]})
+    //     villagers.push(users[i])
+    //   }
+    //   if(i == 4){
+    //     db.collection('gameState').doc(this.state.gameId).update({medic: users[i]})
+    //     villagers.push(users[i])
+    //   }
+    //   if(i > 4){
+    //     villagers.push(users[i])
+    //   }
+    // }
+    users.map((doc,i) => {
+      console.log("what does my user look like", doc.id)
+      let user = doc.id
+
       if(i<2){
         console.log("werewolves are ", werewolves)
-        werewolves.push(users[i])
+        werewolves.push(user)
       }
       if(i == 3){
-        db.collection('gameState').doc(this.state.gameId).update({seer: users[i]})
-        villagers.push(users[i])
+        db.collection('gameState').doc(this.state.gameId).update({seer: user})
+        villagers.push(user)
       }
       if(i == 4){
-        db.collection('gameState').doc(this.state.gameId).update({medic: users[i]})
-        villagers.push(users[i])
+        db.collection('gameState').doc(this.state.gameId).update({medic: user})
+        villagers.push(user)
       }
       if(i > 4){
-        villagers.push(users[i])
+        villagers.push(user)
       }
-    }
 
+
+    })
+    console.log("what is the ww object we are pushing", werewolves)
     await db.collection('gameState').doc(this.state.gameId).update({werewolves: werewolves}) 
     await db.collection('gameState').doc(this.state.gameId).update({villagers: villagers}) 
 
