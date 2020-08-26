@@ -53,7 +53,7 @@ export default class GameRoom extends React.Component {
           const video = document.createElement('video');
           call.on('stream', (userVideoStream) => {
             if (!this.peers.has(call.peer)) {
-               this.addVideoStream(video, userVideoStream);
+               this.addVideoStream(video, userVideoStream, this.state.ourId);
             }
             this.peers.add(call.peer);
           });
@@ -121,9 +121,20 @@ export default class GameRoom extends React.Component {
     });
   }
   addVideoStream(video, stream, userId) {
+
+    // let user = await db.collection('users').where("userId", "==", id).get()
+    // user = user.docs
+    // user = user.id
+
     if (this.state.refCounter === 1) {
       this.videoRef1.current.srcObject = stream;
       this.setState({ refCounter: this.state.refCounter + 1 });
+      
+    }
+    if (this.state.refCounter === 2) {
+      this.videoRef2.current.srcObject = stream;
+      this.setState({ refCounter: this.state.refCounter + 1 });
+      this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
     }
     else{
       let newRemoteUser = []
