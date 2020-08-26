@@ -1,7 +1,7 @@
 import React from 'react';
 import Peer from 'peerjs';
 import { db } from '../firebase/firebase';
-import Participant from './Participant'
+import {Participant} from './Participant'
 export default class GameRoom extends React.Component {
   constructor(props) {
     super(props);
@@ -53,7 +53,7 @@ export default class GameRoom extends React.Component {
           const video = document.createElement('video');
           call.on('stream', (userVideoStream) => {
             if (!this.peers.has(call.peer)) {
-              this.addVideoStream(video, userVideoStream);
+               this.addVideoStream(video, userVideoStream);
             }
             this.peers.add(call.peer);
           });
@@ -86,15 +86,15 @@ export default class GameRoom extends React.Component {
       this.setState({ ourId: id });
      
       const user = await db.collection('users').add({ userId: id, currentGame: this.state.gameId })
+      console.log("what is newUser", user.id)
 
       // let user = await db.collection('users').where("userId", "==", id).get()
       // user = user.docs
-      console.log("what is newUser", user.id)
+      // let newUserStream = []
+      // newUserStream.push(user.id)
+      // newUserStream.push(stream)
 
-      let newUserStream = {}
-      newUserStream[user.id] = stream
-
-      this.setState({userStreamArr: [...this.state.userStreamArr, newUserStream] })
+      // this.setState({userStreamArr: [...this.state.userStreamArr, newUserStream] })
     });
   }
   connectToNewUser(userId, stream, myPeer) {
@@ -107,6 +107,12 @@ export default class GameRoom extends React.Component {
       if (userId !== this.state.ourId) {
         if (!this.peers.has(call.peer)) {
           this.addVideoStream(video, userVideoStream, userId);
+
+          // let newRemoteUser = []
+          // newRemoteUser.push(userId)
+          // newRemoteUser.push(userVideoStream)
+
+          // this.setState({userStreamArr: [...this.state.userStreamArr,newRemoteUser]})
         }
       }
     });
@@ -118,12 +124,13 @@ export default class GameRoom extends React.Component {
     if (this.state.refCounter === 1) {
       this.videoRef1.current.srcObject = stream;
       this.setState({ refCounter: this.state.refCounter + 1 });
-    } else if (this.state.refCounter === 2) {
-      this.videoRef2.current.srcObject = stream;
-      this.setState({ refCounter: this.state.refCounter + 1 });
-    } else if (this.state.refCounter === 3) {
-      this.videoRef3.current.srcObject = stream;
-      this.setState({ refCounter: this.state.refCounter + 1 });
+    }
+    else{
+      let newRemoteUser = []
+      newRemoteUser.push(userId)
+      newRemoteUser.push(stream)
+
+      this.setState({userStreamArr: [...this.state.userStreamArr,newRemoteUser]})
     }
   }
   handleNightTransition(game, ourId) {
@@ -344,6 +351,9 @@ export default class GameRoom extends React.Component {
       <div>
         <p>hello</p>
         <video ref={this.videoRef1} autoPlay={true} muted={true} />
+        {this.state.userStreamArr.map(userStream => {
+          return <Participant userStreamTuple = {userStream} />
+        })}
         {/* {this.state.userDocIds.map((participant, idx) => {
           return <Participant participantId={participant} />
         })}
