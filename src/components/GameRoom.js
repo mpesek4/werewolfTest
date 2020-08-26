@@ -2,6 +2,8 @@ import React from 'react';
 import Peer from 'peerjs';
 import { db } from '../firebase/firebase';
 import {Participant} from './Participant'
+import * as firebase from 'firebase';
+
 export default class GameRoom extends React.Component {
   constructor(props) {
     super(props);
@@ -10,7 +12,8 @@ export default class GameRoom extends React.Component {
       refCounter: 1,
       ourId: '',
       gameId: "6g6EUlGaBQbD0m2rjBUx",
-      userStreamArr: []
+      userStreamArr: [],
+      role: ""
     };
     this.test = 1
     
@@ -90,6 +93,14 @@ export default class GameRoom extends React.Component {
      
       const user = await db.collection('users').add({ userId: id, currentGame: this.state.gameId })
       console.log("what is newUser", user.id)
+
+
+      const gameStateRef = db.collection('gameState').doc(this.state.gameId)
+      gameStateRef.update({
+        players: firebase.firestore.FieldValue.arrayUnion(user.id)
+      })
+
+
       console.log("what is our peerjs ID", id)
 
       // let user = await db.collection('users').where("userId", "==", id).get()
@@ -111,10 +122,6 @@ export default class GameRoom extends React.Component {
       if (userId !== this.state.ourId) {
         if (!this.peers.has(call.peer)) {
           this.addVideoStream(video, userVideoStream, userId);
-          // let newRemoteUser = []
-          // newRemoteUser.push(userId)
-          // newRemoteUser.push(userVideoStream)
-          // this.setState({userStreamArr: [...this.state.userStreamArr,newRemoteUser]})
         }
       }
     });
@@ -124,42 +131,8 @@ export default class GameRoom extends React.Component {
   }
   addVideoStream(video, stream, userId) {
 
-    // let user = await db.collection('users').where("userId", "==", id).get()
-    // user = user.docs
-    // user = user.id
-
-    // if (this.state.refCounter === 1) {
-    //   this.videoRef1.current.srcObject = stream;
-    //   this.setState({ refCounter: this.state.refCounter + 1 }); 
-
-    // }
-    // else if (this.state.refCounter === 2) {
-    //   this.videoRef2.current.srcObject = stream;
-    //   this.setState({ refCounter: this.state.refCounter + 1 });
-    //   this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
-    // }
-    // else if (this.state.refCounter === 3) {
-    //   this.videoRef2.current.srcObject = stream;
-    //   this.setState({ refCounter: this.state.refCounter + 1 });
-    //   this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
-    // }
-    // else if (this.state.refCounter === 4) {
-    //   this.videoRef2.current.srcObject = stream;
-    //   this.setState({ refCounter: this.state.refCounter + 1 });
-    //   this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
-    // }
-    // else if (this.state.refCounter === 5) {
-    //   this.videoRef2.current.srcObject = stream;
-    //   this.setState({ refCounter: this.state.refCounter + 1 });
-    //   this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
-    // }
-    // else if (this.state.refCounter === 6) {
-    //   this.videoRef2.current.srcObject = stream;
-    //   this.setState({ refCounter: this.state.refCounter + 1 });
-    //   this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
-    // }
-   
     let newTuple = [userId,stream]
+
     if(this.state.userStreamArr.includes(newTuple)) return
     this.setState({userStreamArr: [...this.state.userStreamArr, newTuple]})
     console.log("adding a user stream to", newTuple)
