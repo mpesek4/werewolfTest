@@ -8,13 +8,11 @@ export default class GameRoom extends React.Component {
     this.state = {
       myVideo: document.createElement('video'),
       refCounter: 1,
-      myPeer: new Peer(undefined, {
-        host: '/',
-        port: '3001',
-      }),
       ourId: '',
       gameId: "6g6EUlGaBQbD0m2rjBUx",
+      userStreamArr: []
     };
+    
     this.peers = new Set();
     this.videoRef1 = React.createRef();
     this.videoRef2 = React.createRef();
@@ -37,7 +35,11 @@ export default class GameRoom extends React.Component {
     console.log(data.data())
 
     let game = data.data()
-
+    const myPeer = new Peer(undefined, {
+      host: '/',
+      port: '3001',
+    })
+    
 
     navigator.mediaDevices
       .getUserMedia({
@@ -46,7 +48,7 @@ export default class GameRoom extends React.Component {
       })
       .then((stream) => {
         this.addVideoStream(this.state.myVideo, stream);
-        this.state.myPeer.on('call', (call) => {
+        myPeer.on('call', (call) => {
           call.answer(stream);
           const video = document.createElement('video');
           call.on('stream', (userVideoStream) => {
@@ -61,7 +63,7 @@ export default class GameRoom extends React.Component {
 
           data.map((doc) => {
             if (this.state.ourId !== doc.data().userId) {
-              this.connectToNewUser(doc.data().userId, stream);
+              this.connectToNewUser(doc.data().userId, stream, myPeer);
             }
           });
         });
@@ -79,14 +81,24 @@ export default class GameRoom extends React.Component {
           }
         })
       });
-    this.state.myPeer.on('open', (id) => {
+    myPeer.on('open', async (id) => {
+      
       this.setState({ ourId: id });
-      const newUser = db.collection('users').add({ userId: id, currentGame: this.state.gameId });
-      console.log("what is newUser", newUser)
+     
+      const user = await db.collection('users').add({ userId: id, currentGame: this.state.gameId })
+
+      // let user = await db.collection('users').where("userId", "==", id).get()
+      // user = user.docs
+      console.log("what is newUser", user.id)
+
+      let newUserStream = {}
+      newUserStream[user.id] = stream
+
+      this.setState({userStreamArr: [...this.state.userStreamArr, newUserStream] })
     });
   }
-  connectToNewUser(userId, stream) {
-    const call = this.state.myPeer.call(userId, stream);
+  connectToNewUser(userId, stream, myPeer) {
+    const call = myPeer.call(userId, stream);
     if (!call) {
       return;
     }
@@ -331,7 +343,7 @@ export default class GameRoom extends React.Component {
     return (
       <div>
         <p>hello</p>
-        <video ref={this.videoRef1} autoPlay={true} />
+        <video ref={this.videoRef1} autoPlay={true} muted={true} />
         {/* {this.state.userDocIds.map((participant, idx) => {
           return <Participant participantId={participant} />
         })}
