@@ -1,26 +1,6 @@
 import React, {useRef, useEffect} from 'react';
 
 
-/*
-
-{
-  userId: stream
-}
-
- addVideoStream(video, stream, userId) {
-    if (this.state.refCounter === 1) {
-      this.videoRef1.current.srcObject = stream;
-      this.setState({ refCounter: this.state.refCounter + 1 });
-    } else if (this.state.refCounter === 2) {
-      this.videoRef2.current.srcObject = stream;
-      this.setState({ refCounter: this.state.refCounter + 1 });
-    } else if (this.state.refCounter === 3) {
-      this.videoRef3.current.srcObject = stream;
-      this.setState({ refCounter: this.state.refCounter + 1 });
-    }
-  }
-
-*/
 
 export const Participant = ({ userStreamTuple }) => {
 
