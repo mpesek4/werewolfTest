@@ -1,4 +1,4 @@
-import React, {useRef} from 'react';
+import React, {useRef, useEffect} from 'react';
 
 
 /*
@@ -23,11 +23,16 @@ import React, {useRef} from 'react';
 */
 
 export const Participant = ({ userStreamTuple }) => {
-    
-  
-    const videoRef = useRef();
 
-    videoRef.current.srcObject = userStreamTuple[1]
+    console.log("Inside participant component", userStreamTuple)
+    const videoRef = useRef();
+    
+    useEffect(() => {
+      
+      videoRef.current.srcObject = userStreamTuple[1]     
+
+    },[])
+   
     
   
     return (

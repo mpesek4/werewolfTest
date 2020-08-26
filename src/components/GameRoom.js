@@ -12,6 +12,8 @@ export default class GameRoom extends React.Component {
       gameId: "6g6EUlGaBQbD0m2rjBUx",
       userStreamArr: []
     };
+    this.test = 1
+    
     
     this.peers = new Set();
     this.videoRef1 = React.createRef();
@@ -87,6 +89,7 @@ export default class GameRoom extends React.Component {
      
       const user = await db.collection('users').add({ userId: id, currentGame: this.state.gameId })
       console.log("what is newUser", user.id)
+      console.log("what is our peerjs ID", id)
 
       // let user = await db.collection('users').where("userId", "==", id).get()
       // user = user.docs
@@ -107,11 +110,9 @@ export default class GameRoom extends React.Component {
       if (userId !== this.state.ourId) {
         if (!this.peers.has(call.peer)) {
           this.addVideoStream(video, userVideoStream, userId);
-
           // let newRemoteUser = []
           // newRemoteUser.push(userId)
           // newRemoteUser.push(userVideoStream)
-
           // this.setState({userStreamArr: [...this.state.userStreamArr,newRemoteUser]})
         }
       }
@@ -126,23 +127,44 @@ export default class GameRoom extends React.Component {
     // user = user.docs
     // user = user.id
 
-    if (this.state.refCounter === 1) {
-      this.videoRef1.current.srcObject = stream;
-      this.setState({ refCounter: this.state.refCounter + 1 });
-      
-    }
-    if (this.state.refCounter === 2) {
-      this.videoRef2.current.srcObject = stream;
-      this.setState({ refCounter: this.state.refCounter + 1 });
-      this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
-    }
-    else{
-      let newRemoteUser = []
-      newRemoteUser.push(userId)
-      newRemoteUser.push(stream)
+    // if (this.state.refCounter === 1) {
+    //   this.videoRef1.current.srcObject = stream;
+    //   this.setState({ refCounter: this.state.refCounter + 1 }); 
 
-      this.setState({userStreamArr: [...this.state.userStreamArr,newRemoteUser]})
-    }
+    // }
+    // else if (this.state.refCounter === 2) {
+    //   this.videoRef2.current.srcObject = stream;
+    //   this.setState({ refCounter: this.state.refCounter + 1 });
+    //   this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
+    // }
+    // else if (this.state.refCounter === 3) {
+    //   this.videoRef2.current.srcObject = stream;
+    //   this.setState({ refCounter: this.state.refCounter + 1 });
+    //   this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
+    // }
+    // else if (this.state.refCounter === 4) {
+    //   this.videoRef2.current.srcObject = stream;
+    //   this.setState({ refCounter: this.state.refCounter + 1 });
+    //   this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
+    // }
+    // else if (this.state.refCounter === 5) {
+    //   this.videoRef2.current.srcObject = stream;
+    //   this.setState({ refCounter: this.state.refCounter + 1 });
+    //   this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
+    // }
+    // else if (this.state.refCounter === 6) {
+    //   this.videoRef2.current.srcObject = stream;
+    //   this.setState({ refCounter: this.state.refCounter + 1 });
+    //   this.setState({userDocIdArr: [...this.userDocIdArr, userId]})
+    // }
+   
+    let newTuple = [userId,stream]
+    if(this.state.userStreamArr.includes(newTuple)) return
+    this.setState({userStreamArr: [...this.state.userStreamArr, newTuple]})
+    console.log("adding a user stream to", this.state.userStreamArr)
+
+      // this.setState({userStreamArr: [...this.state.userStreamArr,newRemoteUser]})
+    
   }
   handleNightTransition(game, ourId) {
     if (game.villagers.length === 1){
@@ -360,7 +382,8 @@ export default class GameRoom extends React.Component {
   render() {
     return (
       <div>
-        <p>hello</p>
+        {(this.state.userStreamArr ? <h>{this.state.userStreamArr.length}</h> : <h>not loaded</h> )}
+        <p>hello </p>
         <video ref={this.videoRef1} autoPlay={true} muted={true} />
         {this.state.userStreamArr.map(userStream => {
           return <Participant userStreamTuple = {userStream} />
