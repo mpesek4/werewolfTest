@@ -1,6 +1,7 @@
 import React from 'react';
 import Peer from 'peerjs';
 import { db } from '../firebase/firebase';
+import Participant from './Participant'
 export default class GameRoom extends React.Component {
   constructor(props) {
     super(props);
@@ -57,6 +58,7 @@ export default class GameRoom extends React.Component {
         });
         db.collection('users').onSnapshot(async (snapshot) => {
           let data = snapshot.docs;
+
           data.map((doc) => {
             if (this.state.ourId !== doc.data().userId) {
               this.connectToNewUser(doc.data().userId, stream);
@@ -79,7 +81,8 @@ export default class GameRoom extends React.Component {
       });
     this.state.myPeer.on('open', (id) => {
       this.setState({ ourId: id });
-      db.collection('users').add({ userId: id, currentGame: this.state.gameId });
+      const newUser = db.collection('users').add({ userId: id, currentGame: this.state.gameId });
+      console.log("what is newUser", newUser)
     });
   }
   connectToNewUser(userId, stream) {
@@ -91,7 +94,7 @@ export default class GameRoom extends React.Component {
     call.on('stream', (userVideoStream) => {
       if (userId !== this.state.ourId) {
         if (!this.peers.has(call.peer)) {
-          this.addVideoStream(video, userVideoStream);
+          this.addVideoStream(video, userVideoStream, userId);
         }
       }
     });
@@ -99,7 +102,7 @@ export default class GameRoom extends React.Component {
       video.remove();
     });
   }
-  addVideoStream(video, stream) {
+  addVideoStream(video, stream, userId) {
     if (this.state.refCounter === 1) {
       this.videoRef1.current.srcObject = stream;
       this.setState({ refCounter: this.state.refCounter + 1 });
@@ -164,7 +167,7 @@ export default class GameRoom extends React.Component {
       return
     }
     game.Night = true
-    game.villagersChoice = ""
+    // game.villagersChoice = ""
     game.wereWolvesChoice = ""
     game.majorityReached = false
     game.votesVillagers = []
@@ -327,10 +330,18 @@ export default class GameRoom extends React.Component {
   render() {
     return (
       <div>
-        <video ref={this.videoRef1} autoPlay={true} muted />
-        <video ref={this.videoRef2} autoPlay={true} muted />
-        <video ref={this.videoRef3} autoPlay={true} muted />
-        <button onClick={() => {this.handleClick()}}> Start game</button>
+        <p>hello</p>
+        <video ref={this.videoRef1} autoPlay={true} />
+        {/* {this.state.userDocIds.map((participant, idx) => {
+          return <Participant participantId={participant} />
+        })}
+        
+        <div>
+          <video ref={this.videoRef1} autoPlay={true} muted />
+          <button onClick={() => this.handleClick()}></button>
+        </div>
+        
+        <button onClick={() => {this.handleClick()}}> Start game</button> */}
       </div>
     );
   }
