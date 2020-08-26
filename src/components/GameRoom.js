@@ -49,13 +49,14 @@ export default class GameRoom extends React.Component {
         audio: true,
       })
       .then((stream) => {
-        this.addVideoStream(this.state.myVideo, stream);
+        this.addVideoStream(this.state.myVideo, stream, this.state.ourId);
         myPeer.on('call', (call) => {
           call.answer(stream);
+          console.log("call is ", call)
           const video = document.createElement('video');
           call.on('stream', (userVideoStream) => {
             if (!this.peers.has(call.peer)) {
-               this.addVideoStream(video, userVideoStream, this.state.ourId);
+               this.addVideoStream(video, userVideoStream, call.peer);
             }
             this.peers.add(call.peer);
           });
@@ -161,7 +162,7 @@ export default class GameRoom extends React.Component {
     let newTuple = [userId,stream]
     if(this.state.userStreamArr.includes(newTuple)) return
     this.setState({userStreamArr: [...this.state.userStreamArr, newTuple]})
-    console.log("adding a user stream to", this.state.userStreamArr)
+    console.log("adding a user stream to", newTuple)
 
       // this.setState({userStreamArr: [...this.state.userStreamArr,newRemoteUser]})
     
@@ -384,7 +385,7 @@ export default class GameRoom extends React.Component {
       <div>
         {(this.state.userStreamArr ? <h>{this.state.userStreamArr.length}</h> : <h>not loaded</h> )}
         <p>hello </p>
-        <video ref={this.videoRef1} autoPlay={true} muted={true} />
+        
         {this.state.userStreamArr.map(userStream => {
           return <Participant userStreamTuple = {userStream} />
         })}
